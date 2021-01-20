@@ -6,29 +6,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content="Tech With K">
-    <title>ZLT S12 Security Analysis - Tech With K</title>
+    <title>AirMaster TD-LTE CPE Security Analysis - Tech With K</title>
     <meta name="author" content="Koorosh">
     
     
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"ZLT S12  CPE is a cheap Chinese 4G CPE made by Shenzhen TOZED Technologies Co., LTD. also known as U.Tel in Iran or other names in some other countries.  \n\nas you can see from the board in the above picture the UART pins are located on the left of the board, the shell is completely unprotected  \nthe nvram configuration file is located under /etc_rw/nv/main/cfg which contains all users of the device  \nthe following dump contains the credentials of the device : \n1234user_Password&#x3D;adminuser_user&#x3D;adminadmin_Password&#x3D;9x07bm8mbN17cadmin_user&#x3D;Root\nthe admin user is the user with the lowest access level\nthere are tons of pages that are not visible to the user level such as Firmware Upgrade, PLMN Configurations, and…  \nbut after I’ve disassembled the /bin/goahead binary of the CPE I’ve found that the ping section under the Diagnostic page of the CPE contains the Shell Injection vulnerability so if I execute the 127.0.0.1 | cat /etc_rw/nv/main/cfg the content of the cfg file returns instead of the ping command  \nnot only the ping section even the traceroute section contains the shell injection!! \nI’ve tried to dump the firmware but I’ve found that the firmware upgrade file already exists on the internet ONLY for resellers of the CPE, so when I’ve downloaded the firmware the file was a password-protected zip, after looking at the /bin/goahead binary and the upgrade process I’ve found that the uploaded file will be pass to the /bin/tzextract  \nthe /bin/tzextract is a bash script that unzips the uploaded file using the tzp258keeper password  \nthe extracted zip file exists on my Github repository\nif the device is SimLocked you can remove the imsi_prefix using nv command\n","dateCreated":"2021-01-20T00:48:59+03:30","dateModified":"2021-01-20T02:03:40+03:30","datePublished":"2021-01-20T00:48:59+03:30","description":"","headline":"ZLT S12 Security Analysis","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../http:/kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../http:/kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/","keywords":"Security, Hardware Hacking"}</script>
-    <meta name="description" content="ZLT S12  CPE is a cheap Chinese 4G CPE made by Shenzhen TOZED Technologies Co., LTD. also known as U.Tel in Iran or other names in some other countries.    as you can see from the board in the above p">
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"AirMaster is a product family of KZ Broadband Technology “KZTech”.There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base. \nin this post, I will discuss the 3000 model with firmware version 2.0.1B1047.\nThere are tons of backdoor included in the firmware with different methods.however, I think some of them are logical bugs.\nHow did I get root access!I didn’t open this box physically to find UART / JTAG ports because I’ve found shell injection vulnerability on the Diagnostic page again! \n1127.0.0.1 | cat &#x2F;tmp&#x2F;nvramconfig&#x2F;RT2860_CONFIG_VLAN\nthis simple command shows the nvram configuration file in the Ping result box.there are many fun parts in this configuration file, like different access levels, SimLock status.\nDifferent Access Levels12345678Login&#x3D;AdministratorPassword&#x3D;M0LT3@4GN3TTelnetPwd&#x3D;root123GuestId&#x3D;adminGuestPassword&#x3D;adminLanguage&#x3D;enVipLogin&#x3D;VIPVipPassword&#x3D;V!P83869000\nas you can see, the admin is actually the guest and the Administrator user is the real admin, I don’t know much about the VIP user.and the Telnet Password is root123 which is so weak! but the good point is telnet is disabled by default. \nso how can we enable Telnet !? it’s simple, we should change the CSS =)if we execute the following js command in the System Maintenance page we can enable the Debug Mode and Telnet.\n1$(&quot;:hidden&quot;).show() ;\nbefore executing :\nafter executing :\nSuper Cookieif we put the following cookie Cookie: kz_userid=Administrator:1  in the cookie jar, we can get access to the CPE without any password! it’s fun and scary at the same time but this device is a Chinese one so it’s normal :)\nDeep Inspection of GoAheadwhat is syscmd?“syscmd.asp” is a page that you can execute shell commands! but it’s password protected and cookie protected (requires authentication)as far as we had the Super Cookie we can bypass the authentication but what about the password ?! it’s quite simple, in this version the password is super1234, and boom! we can execute all commands exactly inside the web page!\nwhat if the device was sim locked?let’s dig into the binary!2 lines refer to the SimCard Restrictions, an asp page, and a form handler that handles the content of that asp page.if we open 192.168.1.1/lte/simcardinfo.asp using administrator credentials or the supercookie we can simply disable the restrictions!if we open the page with admin (guest) credentials we should use the js command to show the hidden parts.\n","dateCreated":"2021-01-21T01:29:02+03:30","dateModified":"2021-01-21T02:39:42+03:30","datePublished":"2021-01-21T01:29:02+03:30","description":"","headline":"AirMaster TD-LTE CPE Security Analysis","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../http:/kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../http:/kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/","keywords":"Security, Hardware Hacking"}</script>
+    <meta name="description" content="AirMaster is a product family of KZ Broadband Technology “KZTech”.There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base.  in this post, I will discuss the 3000 model">
 <meta property="og:type" content="blog">
-<meta property="og:title" content="ZLT S12 Security Analysis">
-<meta property="og:url" content="http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/index.html">
+<meta property="og:title" content="AirMaster TD-LTE CPE Security Analysis">
+<meta property="og:url" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/index.html">
 <meta property="og:site_name" content="Tech With K">
-<meta property="og:description" content="ZLT S12  CPE is a cheap Chinese 4G CPE made by Shenzhen TOZED Technologies Co., LTD. also known as U.Tel in Iran or other names in some other countries.    as you can see from the board in the above p">
+<meta property="og:description" content="AirMaster is a product family of KZ Broadband Technology “KZTech”.There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base.  in this post, I will discuss the 3000 model">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://kooroshh.github.io/assets/images/zlt-s12.jpeg">
-<meta property="og:image" content="http://kooroshh.github.io/assets/images/utel-goahead-disassemble.png">
-<meta property="og:image" content="http://kooroshh.github.io/assets/images/utel-goahead-disassemble2.png">
-<meta property="article:published_time" content="2021-01-19T21:18:59.000Z">
-<meta property="article:modified_time" content="2021-01-19T22:33:40.845Z">
+<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/before-js.png">
+<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/after-js.png">
+<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/syscmd.png">
+<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/airmaster-syscmd.png">
+<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/lte.png">
+<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/restrict.png">
+<meta property="article:published_time" content="2021-01-20T21:59:02.000Z">
+<meta property="article:modified_time" content="2021-01-20T23:09:42.076Z">
 <meta property="article:author" content="Koorosh">
 <meta property="article:tag" content="Security">
 <meta property="article:tag" content="Hardware Hacking">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://kooroshh.github.io/assets/images/zlt-s12.jpeg">
+<meta name="twitter:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/before-js.png">
 <meta name="twitter:creator" content="@kooroshh">
     
     
@@ -253,20 +256,20 @@
         <div class="post-header main-content-wrap text-left">
     
         <h1 class="post-title">
-            ZLT S12 Security Analysis
+            AirMaster TD-LTE CPE Security Analysis
         </h1>
     
     
         <div class="post-meta">
-    <time datetime="2021-01-20T00:48:59+03:30">
+    <time datetime="2021-01-21T01:29:02+03:30">
 	
-		    Jan 20, 2021
+		    Jan 21, 2021
     	
     </time>
     
         <span>in </span>
         
-    <a class="category-link" href="../../../../categories/Security/">Security</a>, <a class="category-link" href="../../../../categories/Security/Hardware-Hacking/">Hardware Hacking</a>
+    <a class="category-link" href="../../../../categories/Hardware-Hacking/">Hardware Hacking</a>, <a class="category-link" href="../../../../categories/Hardware-Hacking/Security/">Security</a>
 
 
     
@@ -278,20 +281,21 @@
     
     <div class="post-content markdown">
         <div class="main-content-wrap">
-            <p>ZLT S12  CPE is a cheap Chinese 4G CPE made by Shenzhen TOZED Technologies Co., LTD. also known as U.Tel in Iran or other names in some other countries.  </p>
-<p><img src="/assets/images/zlt-s12.jpeg" alt="ZLT-S12"></p>
-<p>as you can see from the board in the above picture the UART pins are located on the left of the board, the shell is completely unprotected  </p>
-<p>the nvram configuration file is located under <code>/etc_rw/nv/main/cfg</code> which contains all users of the device  </p>
-<p>the following dump contains the credentials of the device : </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">user_Password&#x3D;admin</span><br><span class="line">user_user&#x3D;admin</span><br><span class="line">admin_Password&#x3D;9x07bm8mbN17c</span><br><span class="line">admin_user&#x3D;Root</span><br></pre></td></tr></table></figure>
-<p>the <code>admin</code> user is the <code>user</code> with the lowest access level</p>
-<p>there are tons of pages that are not visible to the user level such as Firmware Upgrade, PLMN Configurations, and…  </p>
-<p><img src="/assets/images/utel-goahead-disassemble.png" alt="Disassembled Binary"><br>but after I’ve disassembled the <code>/bin/goahead</code> binary of the CPE I’ve found that the ping section under the Diagnostic page of the CPE contains the Shell Injection vulnerability so if I execute the <code>127.0.0.1 | cat /etc_rw/nv/main/cfg</code> the content of the cfg file returns instead of the ping command  </p>
-<p><img src="/assets/images/utel-goahead-disassemble2.png" alt="Disassembled Binary"><br>not only the ping section even the traceroute section contains the shell injection!! </p>
-<p>I’ve tried to dump the firmware but I’ve found that the firmware upgrade file already exists on the internet ONLY for resellers of the CPE, so when I’ve downloaded the firmware the file was a password-protected zip, after looking at the <code>/bin/goahead</code> binary and the upgrade process I’ve found that the uploaded file will be pass to the <code>/bin/tzextract</code>  </p>
-<p>the <code>/bin/tzextract</code> is a bash script that unzips the uploaded file using the <code>tzp258keeper</code> password  </p>
-<p>the extracted zip file exists on my <a target="_blank" rel="noopener" href="https://github.com/kooroshh/UtelRootfs">Github repository</a></p>
-<p>if the device is SimLocked you can remove the imsi_prefix using <code>nv</code> command</p>
+            <p>AirMaster is a product family of KZ Broadband Technology “KZTech”.<br>There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base. </p>
+<p>in this post, I will discuss the 3000 model with firmware version 2.0.1B1047.</p>
+<p>There are tons of backdoor included in the firmware with different methods.<br>however, I think some of them are logical bugs.</p>
+<h3 id="How-did-I-get-root-access"><a href="#How-did-I-get-root-access" class="headerlink" title="How did I get root access!"></a>How did I get root access!</h3><p>I didn’t open this box physically to find UART / JTAG ports because I’ve found shell injection vulnerability on the Diagnostic page again! </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1 | cat &#x2F;tmp&#x2F;nvramconfig&#x2F;RT2860_CONFIG_VLAN</span><br></pre></td></tr></table></figure>
+<p>this simple command shows the nvram configuration file in the Ping result box.<br>there are many fun parts in this configuration file, like different access levels, SimLock status.</p>
+<h3 id="Different-Access-Levels"><a href="#Different-Access-Levels" class="headerlink" title="Different Access Levels"></a>Different Access Levels</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Login&#x3D;Administrator</span><br><span class="line">Password&#x3D;M0LT3@4GN3T</span><br><span class="line">TelnetPwd&#x3D;root123</span><br><span class="line">GuestId&#x3D;admin</span><br><span class="line">GuestPassword&#x3D;admin</span><br><span class="line">Language&#x3D;en</span><br><span class="line">VipLogin&#x3D;VIP</span><br><span class="line">VipPassword&#x3D;V!P83869000</span><br></pre></td></tr></table></figure>
+<p>as you can see, the admin is actually the guest and the Administrator user is the real admin, I don’t know much about the VIP user.<br>and the Telnet Password is root123 which is so weak! but the good point is telnet is disabled by default. </p>
+<p>so how can we enable Telnet !? it’s simple, we should change the CSS =)<br>if we execute the following js command in the <code>System Maintenance</code> page we can enable the Debug Mode and Telnet.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$(&quot;:hidden&quot;).show() ;</span><br></pre></td></tr></table></figure>
+<h4 id="before-executing"><a href="#before-executing" class="headerlink" title="before executing :"></a>before executing :</h4><p><img src="/2021/01/21/AirMaster-Security-Analysis/before-js.png" alt="Before Executing"></p>
+<h4 id="after-executing"><a href="#after-executing" class="headerlink" title="after executing :"></a>after executing :</h4><p><img src="/2021/01/21/AirMaster-Security-Analysis/after-js.png" alt="After Executing"></p>
+<h3 id="Super-Cookie"><a href="#Super-Cookie" class="headerlink" title="Super Cookie"></a>Super Cookie</h3><p>if we put the following cookie <code>Cookie: kz_userid=Administrator:1 </code> in the cookie jar, we can get access to the CPE without any password! it’s fun and scary at the same time but this device is a Chinese one so it’s normal :)</p>
+<h3 id="Deep-Inspection-of-GoAhead"><a href="#Deep-Inspection-of-GoAhead" class="headerlink" title="Deep Inspection of GoAhead"></a>Deep Inspection of GoAhead</h3><p><img src="/2021/01/21/AirMaster-Security-Analysis/syscmd.png" alt="System Command"><br>what is syscmd?<br>“syscmd.asp” is a page that you can execute shell commands! but it’s password protected and cookie protected (requires authentication)<br>as far as we had the Super Cookie we can bypass the authentication but what about the password ?! it’s quite simple, in this version the password is <code>super1234</code>, and boom! we can execute all commands exactly inside the web page!<br><img src="/2021/01/21/AirMaster-Security-Analysis/airmaster-syscmd.png" alt="System Command"></p>
+<p>what if the device was sim locked?<br>let’s dig into the binary!<br><img src="/2021/01/21/AirMaster-Security-Analysis/lte.png" alt="LTE"><br>2 lines refer to the SimCard Restrictions, an asp page, and a form handler that handles the content of that asp page.<br>if we open <code>192.168.1.1/lte/simcardinfo.asp</code> using administrator credentials or the supercookie we can simply disable the restrictions!<br>if we open the page with admin (guest) credentials we should use the js command to show the hidden parts.<br><img src="/2021/01/21/AirMaster-Security-Analysis/restrict.png" alt="LTE Restriction"></p>
 
             
 
@@ -313,14 +317,11 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="../../21/AirMaster-Security-Analysis/"
-                    data-tooltip="AirMaster TD-LTE CPE Security Analysis"
-                    aria-label="PREVIOUS: AirMaster TD-LTE CPE Security Analysis"
-                >
-                    
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
                     </a>
@@ -330,9 +331,9 @@
                     
                 <a
                     class="post-action-btn btn btn--default tooltip--top"
-                    href="../../19/who-am-i/"
-                    data-tooltip=":$ whoami"
-                    aria-label="NEXT: :$ whoami"
+                    href="../../20/ZLT-Security-Analysis/"
+                    data-tooltip="ZLT S12 Security Analysis"
+                    aria-label="NEXT: ZLT S12 Security Analysis"
                 >
                     
                         <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
@@ -357,7 +358,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -370,7 +371,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -383,7 +384,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                    target="new" href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -442,14 +443,11 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="../../21/AirMaster-Security-Analysis/"
-                    data-tooltip="AirMaster TD-LTE CPE Security Analysis"
-                    aria-label="PREVIOUS: AirMaster TD-LTE CPE Security Analysis"
-                >
-                    
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
                     </a>
@@ -459,9 +457,9 @@
                     
                 <a
                     class="post-action-btn btn btn--default tooltip--top"
-                    href="../../19/who-am-i/"
-                    data-tooltip=":$ whoami"
-                    aria-label="NEXT: :$ whoami"
+                    href="../../20/ZLT-Security-Analysis/"
+                    data-tooltip="ZLT S12 Security Analysis"
+                    aria-label="NEXT: ZLT S12 Security Analysis"
                 >
                     
                         <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
@@ -486,7 +484,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -499,7 +497,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -512,7 +510,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                    target="new" href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -556,7 +554,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                         aria-label="Share on Facebook"
                     >
                         <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
@@ -569,7 +567,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                        href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                         aria-label="Share on Twitter"
                     >
                         <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
@@ -582,7 +580,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/"
+                        href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
                         aria-label="Share on Google+"
                     >
                         <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
@@ -638,9 +636,9 @@
     
         <script>
           var disqus_config = function() {
-            this.page.url = 'http://kooroshh.github.io/2021/01/20/ZLT-Security-Analysis/';
+            this.page.url = 'http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/';
               
-            this.page.identifier = '2021/01/20/ZLT-Security-Analysis/';
+            this.page.identifier = '2021/01/21/AirMaster-Security-Analysis/';
               
           };
           (function() {

@@ -246,6 +246,78 @@
                     
                         <a
                             class="link-unstyled"
+                            href="../2021/01/21/AirMaster-Security-Analysis/"
+                            aria-label=": AirMaster TD-LTE CPE Security Analysis"
+                        >
+                            AirMaster TD-LTE CPE Security Analysis
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2021-01-21T01:29:02+03:30">
+	
+		    Jan 21, 2021
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="../categories/Hardware-Hacking/">Hardware Hacking</a>, <a class="category-link" href="../categories/Hardware-Hacking/Security/">Security</a>
+
+
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-content">
+                    <p>AirMaster is a product family of KZ Broadband Technology “KZTech”.<br>There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base. </p>
+<p>in this post, I will discuss the 3000 model with firmware version 2.0.1B1047.</p>
+<p>There are tons of backdoor included in the firmware with different methods.<br>however, I think some of them are logical bugs.</p>
+<h3 id="How-did-I-get-root-access"><a href="#How-did-I-get-root-access" class="headerlink" title="How did I get root access!"></a>How did I get root access!</h3><p>I didn’t open this box physically to find UART / JTAG ports because I’ve found shell injection vulnerability on the Diagnostic page again! </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1 | cat &#x2F;tmp&#x2F;nvramconfig&#x2F;RT2860_CONFIG_VLAN</span><br></pre></td></tr></table></figure>
+<p>this simple command shows the nvram configuration file in the Ping result box.<br>there are many fun parts in this configuration file, like different access levels, SimLock status.</p>
+<h3 id="Different-Access-Levels"><a href="#Different-Access-Levels" class="headerlink" title="Different Access Levels"></a>Different Access Levels</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Login&#x3D;Administrator</span><br><span class="line">Password&#x3D;M0LT3@4GN3T</span><br><span class="line">TelnetPwd&#x3D;root123</span><br><span class="line">GuestId&#x3D;admin</span><br><span class="line">GuestPassword&#x3D;admin</span><br><span class="line">Language&#x3D;en</span><br><span class="line">VipLogin&#x3D;VIP</span><br><span class="line">VipPassword&#x3D;V!P83869000</span><br></pre></td></tr></table></figure>
+<p>as you can see, the admin is actually the guest and the Administrator user is the real admin, I don’t know much about the VIP user.<br>and the Telnet Password is root123 which is so weak! but the good point is telnet is disabled by default. </p>
+<p>so how can we enable Telnet !? it’s simple, we should change the CSS =)<br>if we execute the following js command in the <code>System Maintenance</code> page we can enable the Debug Mode and Telnet.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$(&quot;:hidden&quot;).show() ;</span><br></pre></td></tr></table></figure>
+<h4 id="before-executing"><a href="#before-executing" class="headerlink" title="before executing :"></a>before executing :</h4><p><img src="/2021/01/21/AirMaster-Security-Analysis/before-js.png" alt="Before Executing"></p>
+<h4 id="after-executing"><a href="#after-executing" class="headerlink" title="after executing :"></a>after executing :</h4><p><img src="/2021/01/21/AirMaster-Security-Analysis/after-js.png" alt="After Executing"></p>
+<h3 id="Super-Cookie"><a href="#Super-Cookie" class="headerlink" title="Super Cookie"></a>Super Cookie</h3><p>if we put the following cookie <code>Cookie: kz_userid=Administrator:1 </code> in the cookie jar, we can get access to the CPE without any password! it’s fun and scary at the same time but this device is a Chinese one so it’s normal :)</p>
+<h3 id="Deep-Inspection-of-GoAhead"><a href="#Deep-Inspection-of-GoAhead" class="headerlink" title="Deep Inspection of GoAhead"></a>Deep Inspection of GoAhead</h3><p><img src="/2021/01/21/AirMaster-Security-Analysis/syscmd.png" alt="System Command"><br>what is syscmd?<br>“syscmd.asp” is a page that you can execute shell commands! but it’s password protected and cookie protected (requires authentication)<br>as far as we had the Super Cookie we can bypass the authentication but what about the password ?! it’s quite simple, in this version the password is <code>super1234</code>, and boom! we can execute all commands exactly inside the web page!<br><img src="/2021/01/21/AirMaster-Security-Analysis/airmaster-syscmd.png" alt="System Command"></p>
+<p>what if the device was sim locked?<br>let’s dig into the binary!<br><img src="/2021/01/21/AirMaster-Security-Analysis/lte.png" alt="LTE"><br>2 lines refer to the SimCard Restrictions, an asp page, and a form handler that handles the content of that asp page.<br>if we open <code>192.168.1.1/lte/simcardinfo.asp</code> using administrator credentials or the supercookie we can simply disable the restrictions!<br>if we open the page with admin (guest) credentials we should use the js command to show the hidden parts.<br><img src="/2021/01/21/AirMaster-Security-Analysis/restrict.png" alt="LTE Restriction"></p>
+
+                    
+                        
+
+
+                    
+                    
+                        <p>
+                            <a
+                                href="../2021/01/21/AirMaster-Security-Analysis/#post-footer"
+                                class="postShorten-excerpt_link link"
+                                aria-label=""
+                            >
+                                Comment and share
+                            </a>
+                        </p>
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-bottom">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
                             href="../2021/01/20/ZLT-Security-Analysis/"
                             aria-label=": ZLT S12 Security Analysis"
                         >

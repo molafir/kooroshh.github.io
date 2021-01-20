@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content="Tech With K">
-    <title>Archives: 2021/1 - Tech With K</title>
+    <title>Category: Security - Tech With K</title>
     <meta name="author" content="Koorosh">
     
     
@@ -14,7 +14,7 @@
     <script type="application/ld+json">{}</script>
     <meta property="og:type" content="blog">
 <meta property="og:title" content="Tech With K">
-<meta property="og:url" content="http://kooroshh.github.io/archives/2021/01/index.html">
+<meta property="og:url" content="http://kooroshh.github.io/categories/Hardware-Hacking/Security/index.html">
 <meta property="og:site_name" content="Tech With K">
 <meta property="og:locale" content="en_US">
 <meta property="article:author" content="Koorosh">
@@ -262,7 +262,7 @@
     
         <span>in </span>
         
-    <a class="category-link" href="../../../categories/Hardware-Hacking/">Hardware Hacking</a>, <a class="category-link" href="../../../categories/Hardware-Hacking/Security/">Security</a>
+    <a class="category-link" href="../">Hardware Hacking</a>, <a class="category-link" href="">Security</a>
 
 
     
@@ -296,140 +296,6 @@
                         <p>
                             <a
                                 href="../../../2021/01/21/AirMaster-Security-Analysis/#post-footer"
-                                class="postShorten-excerpt_link link"
-                                aria-label=""
-                            >
-                                Comment and share
-                            </a>
-                        </p>
-                    
-                </div>
-            
-        </div>
-        
-    </article>
-    
-    
-    <article class="postShorten postShorten--thumbnailimg-bottom">
-        <div class="postShorten-wrap">
-            
-            <div class="postShorten-header">
-                <h1 class="postShorten-title">
-                    
-                        <a
-                            class="link-unstyled"
-                            href="../../../2021/01/20/ZLT-Security-Analysis/"
-                            aria-label=": ZLT S12 Security Analysis"
-                        >
-                            ZLT S12 Security Analysis
-                        </a>
-                    
-                </h1>
-                <div class="postShorten-meta">
-    <time datetime="2021-01-20T00:48:59+03:30">
-	
-		    Jan 20, 2021
-    	
-    </time>
-    
-        <span>in </span>
-        
-    <a class="category-link" href="../../../categories/Security/">Security</a>, <a class="category-link" href="../../../categories/Security/Hardware-Hacking/">Hardware Hacking</a>
-
-
-    
-</div>
-
-            </div>
-            
-                <div class="postShorten-content">
-                    <p>ZLT S12  CPE is a cheap Chinese 4G CPE made by Shenzhen TOZED Technologies Co., LTD. also known as U.Tel in Iran or other names in some other countries.  </p>
-<p><img src="/assets/images/zlt-s12.jpeg" alt="ZLT-S12"></p>
-<p>as you can see from the board in the above picture the UART pins are located on the left of the board, the shell is completely unprotected  </p>
-<p>the nvram configuration file is located under <code>/etc_rw/nv/main/cfg</code> which contains all users of the device  </p>
-<p>the following dump contains the credentials of the device : </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">user_Password&#x3D;admin</span><br><span class="line">user_user&#x3D;admin</span><br><span class="line">admin_Password&#x3D;9x07bm8mbN17c</span><br><span class="line">admin_user&#x3D;Root</span><br></pre></td></tr></table></figure>
-<p>the <code>admin</code> user is the <code>user</code> with the lowest access level</p>
-<p>there are tons of pages that are not visible to the user level such as Firmware Upgrade, PLMN Configurations, and…  </p>
-<p><img src="/assets/images/utel-goahead-disassemble.png" alt="Disassembled Binary"><br>but after I’ve disassembled the <code>/bin/goahead</code> binary of the CPE I’ve found that the ping section under the Diagnostic page of the CPE contains the Shell Injection vulnerability so if I execute the <code>127.0.0.1 | cat /etc_rw/nv/main/cfg</code> the content of the cfg file returns instead of the ping command  </p>
-<p><img src="/assets/images/utel-goahead-disassemble2.png" alt="Disassembled Binary"><br>not only the ping section even the traceroute section contains the shell injection!! </p>
-<p>I’ve tried to dump the firmware but I’ve found that the firmware upgrade file already exists on the internet ONLY for resellers of the CPE, so when I’ve downloaded the firmware the file was a password-protected zip, after looking at the <code>/bin/goahead</code> binary and the upgrade process I’ve found that the uploaded file will be pass to the <code>/bin/tzextract</code>  </p>
-<p>the <code>/bin/tzextract</code> is a bash script that unzips the uploaded file using the <code>tzp258keeper</code> password  </p>
-<p>the extracted zip file exists on my <a target="_blank" rel="noopener" href="https://github.com/kooroshh/UtelRootfs">Github repository</a></p>
-<p>if the device is SimLocked you can remove the imsi_prefix using <code>nv</code> command</p>
-
-                    
-                        
-
-
-                    
-                    
-                        <p>
-                            <a
-                                href="../../../2021/01/20/ZLT-Security-Analysis/#post-footer"
-                                class="postShorten-excerpt_link link"
-                                aria-label=""
-                            >
-                                Comment and share
-                            </a>
-                        </p>
-                    
-                </div>
-            
-        </div>
-        
-    </article>
-    
-    
-    <article class="postShorten postShorten--thumbnailimg-bottom">
-        <div class="postShorten-wrap">
-            
-            <div class="postShorten-header">
-                <h1 class="postShorten-title">
-                    
-                        <a
-                            class="link-unstyled"
-                            href="../../../2021/01/19/who-am-i/"
-                            aria-label=": :$ whoami"
-                        >
-                            :$ whoami
-                        </a>
-                    
-                </h1>
-                <div class="postShorten-meta">
-    <time datetime="2021-01-19T03:59:03+03:30">
-	
-		    Jan 19, 2021
-    	
-    </time>
-    
-        <span>in </span>
-        
-    <a class="category-link" href="../../../categories/Drafts/">Drafts</a>
-
-
-    
-</div>
-
-            </div>
-            
-                <div class="postShorten-content">
-                    <h3 id="whoami"><a href="#whoami" class="headerlink" title=":$ whoami"></a><code>:$ whoami</code></h3><p>in this blog, I will talk about security concerns and security problems of existing software/hardware and maybe make some tutorials </p>
-<p>You may know me as “MrOplus” or “/dev/nvram” if you already know me, then ignore this post and keep move on</p>
-<p>for those readers that don’t know me my name is Koorosh, some of my friends call me “K” I’m a college drop out (yes I am) and for now, I work as a full-stack engineer at <a target="_blank" rel="noopener" href="https://oorbit.tv/">Oorbit</a>  </p>
-<p>for the past few years, I’ve worked as a Security Engineer, Embedded Developer, Full-Stack Developer, and mostly as a Mobile Developer</p>
-<p>I can make cool things with some programming languages like Java, PHP, Python, Javascript, GoLang, C++(QT) on platforms like Android, Windows, Linux, macOS  </p>
-<p>you can always contact me via <a href="mailto:koorosh@programmer.net">Koorosh@Programmer.net</a><br>this blog is based on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo">Hexo.js</a> and <a target="_blank" rel="noopener" href="https://github.com/LouisBarranqueiro/hexo-theme-tranquilpeak">TranquilPeak Theme</a>  </p>
-
-                    
-                        
-
-
-                    
-                    
-                        <p>
-                            <a
-                                href="../../../2021/01/19/who-am-i/#post-footer"
                                 class="postShorten-excerpt_link link"
                                 aria-label=""
                             >
