@@ -246,6 +246,76 @@
                     
                         <a
                             class="link-unstyled"
+                            href="../../../2021/01/31/TSCOBox-Security-Analysis/"
+                            aria-label=": TSCOBox Security Analysis"
+                        >
+                            TSCOBox Security Analysis
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2021-01-31T11:05:40+03:30">
+	
+		    Jan 31, 2021
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="../../../categories/Application-Security-Analysis/">Application Security Analysis</a>, <a class="category-link" href="../../../categories/Application-Security-Analysis/Security/">Security</a>
+
+
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-content">
+                    <h3 id="What-is-TSCO-Box"><a href="#What-is-TSCO-Box" class="headerlink" title="What is TSCO Box?"></a>What is TSCO Box?</h3><p>TSCO Box is an android tv box based on AllWinner H3 SoC, originally made by “WeChip” which re-branded as “TSCO” with some software modifications.<br><img src="/2021/01/31/TSCOBox-Security-Analysis/15657561632.jpg" alt="WeChip R69"></p>
+<h3 id="Journey"><a href="#Journey" class="headerlink" title="Journey"></a>Journey</h3><p>I don’t own this box personally but I’ve found the software upgrade file from the Internet.<br>there are so many modified versions available on the Internet but fortunately, I’ve found the exact software upgrade file from their website.</p>
+<p>the software upgrade file was actually an apk file, which upgrades the main launcher of the box.<br>That’s all! the whole software modifications were just an android launcher on top of the Chinese firmware.</p>
+<h3 id="Insecure-API-Implementation"><a href="#Insecure-API-Implementation" class="headerlink" title="Insecure API Implementation"></a>Insecure API Implementation</h3><p>This launcher is too funny, for example, the launcher process the user registration at the same time, it sends the token key to the user exactly from itself! let’s see the code :<br><img src="/2021/01/31/TSCOBox-Security-Analysis/sms.png" alt="SMS"></p>
+<p>now as you can see in the above image, the SMS Gateway API is hardcoded exactly in the application with the credentials!!!</p>
+<p>but let’s dig in deeper</p>
+<h3 id="Remote-Code-Execution"><a href="#Remote-Code-Execution" class="headerlink" title="Remote Code Execution"></a>Remote Code Execution</h3><p>There is a service that checks the remote APIs availabilities using the PING command<br>in the LB Finder Service, there is a method named isOnline that accepts a string and pass it to the PING command</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public boolean isOnline(String str) &#123;</span><br><span class="line">       Runtime runtime &#x3D; Runtime.getRuntime();</span><br><span class="line">       try &#123;</span><br><span class="line">           if (runtime.exec(&quot;&#x2F;system&#x2F;bin&#x2F;ping -c 1 &quot; + str).waitFor() &#x3D;&#x3D; 0) &#123;</span><br><span class="line">               return true;</span><br><span class="line">           &#125;</span><br><span class="line">           return false;</span><br><span class="line">       &#125; catch (IOException | InterruptedException e) &#123;</span><br><span class="line">           e.printStackTrace();</span><br><span class="line">           return false;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<p>the usage flow is like the below image :<br><img src="/2021/01/31/TSCOBox-Security-Analysis/rce-flow.png" alt="flow"></p>
+<p>now what if we intercept the JsonNodeRequest and modify the IP to the <code>127.0.0.1 | rm -rf /sdcard</code>? yes! that’s possible because there is no IP validation in the code.<br>as far as the launcher is a kind of system app and the application manifest contains the following permissions it’s quite dangerous</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_NETWORK_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.SET_WALLPAPER&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.CHANGE_WIFI_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_WIFI_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.INTERNET&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.READ_EXTERNAL_STORAGE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_FINE_LOCATION&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_COARSE_LOCATION&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.REQUEST_INSTALL_PACKAGES&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.RECEIVE_BOOT_COMPLETED&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.READ_PHONE_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_SETTINGS&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_SECURE_SETTINGS&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;com.android.providers.tv.permission.WRITE_EPG_DATA&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;com.android.providers.tv.permission.READ_EPG_DATA&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WAKE_LOCK&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE&quot;&#x2F;&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="Remote-API-Insecurity"><a href="#Remote-API-Insecurity" class="headerlink" title="Remote API Insecurity"></a>Remote API Insecurity</h3><p>The remote API was not secure at all, that was the most insecure web application I’ve ever seen.<br>it was written in Python using Django Framework with Debug Mode enabled which routed me to dump the whole user data, device locations, and details of every single piece of hardware they ever sold! </p>
+<p>whole communications are based on HTTP and IP address which means almost everyone can intercept and modify the requests and responses</p>
+
+                    
+                        
+
+
+                    
+                    
+                        <p>
+                            <a
+                                href="../../../2021/01/31/TSCOBox-Security-Analysis/#post-footer"
+                                class="postShorten-excerpt_link link"
+                                aria-label=""
+                            >
+                                Comment and share
+                            </a>
+                        </p>
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-bottom">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
                             href="../../../2021/01/21/AirMaster-Security-Analysis/"
                             aria-label=": AirMaster TD-LTE CPE Security Analysis"
                         >
