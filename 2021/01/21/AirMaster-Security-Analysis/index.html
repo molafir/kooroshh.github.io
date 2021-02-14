@@ -11,27 +11,27 @@
     
     
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"AirMaster is a product family of KZ Broadband Technology “KZTech”.There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base. \nin this post, I will discuss the 3000 model with firmware version 2.0.1B1047.\nThere are tons of backdoor included in the firmware with different methods.however, I think some of them are logical bugs.\nHow did I get root access!I didn’t open this box physically to find UART / JTAG ports because I’ve found shell injection vulnerability on the Diagnostic page again! \n1127.0.0.1 | cat &#x2F;tmp&#x2F;nvramconfig&#x2F;RT2860_CONFIG_VLAN\nthis simple command shows the nvram configuration file in the Ping result box.there are many fun parts in this configuration file, like different access levels, SimLock status.\nDifferent Access Levels12345678Login&#x3D;AdministratorPassword&#x3D;M0LT3@4GN3TTelnetPwd&#x3D;root123GuestId&#x3D;adminGuestPassword&#x3D;adminLanguage&#x3D;enVipLogin&#x3D;VIPVipPassword&#x3D;V!P83869000\nas you can see, the admin is actually the guest and the Administrator user is the real admin, I don’t know much about the VIP user.and the Telnet Password is root123 which is so weak! but the good point is telnet is disabled by default. \nso how can we enable Telnet !? it’s simple, we should change the CSS =)if we execute the following js command in the System Maintenance page we can enable the Debug Mode and Telnet.\n1$(&quot;:hidden&quot;).show() ;\nbefore executing :\nafter executing :\nSuper Cookieif we put the following cookie Cookie: kz_userid=Administrator:1  in the cookie jar, we can get access to the CPE without any password! it’s fun and scary at the same time but this device is a Chinese one so it’s normal :)\nDeep Inspection of GoAheadwhat is syscmd?“syscmd.asp” is a page that you can execute shell commands! but it’s password protected and cookie protected (requires authentication)as far as we had the Super Cookie we can bypass the authentication but what about the password ?! it’s quite simple, in this version the password is super1234, and boom! we can execute all commands exactly inside the web page!\nwhat if the device was sim locked?let’s dig into the binary!2 lines refer to the SimCard Restrictions, an asp page, and a form handler that handles the content of that asp page.if we open 192.168.1.1/lte/simcardinfo.asp using administrator credentials or the supercookie we can simply disable the restrictions!if we open the page with admin (guest) credentials we should use the js command to show the hidden parts.\n","dateCreated":"2021-01-21T01:29:02+03:30","dateModified":"2021-01-21T02:39:42+03:30","datePublished":"2021-01-21T01:29:02+03:30","description":"","headline":"AirMaster TD-LTE CPE Security Analysis","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../http:/kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../http:/kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/","keywords":"Security, Hardware Hacking"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"AirMaster is a product family of KZ Broadband Technology “KZTech”.There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base. \nin this post, I will discuss the 3000 model with firmware version 2.0.1B1047.\nThere are tons of backdoor included in the firmware with different methods.however, I think some of them are logical bugs.\nHow did I get root access!I didn’t open this box physically to find UART / JTAG ports because I’ve found shell injection vulnerability on the Diagnostic page again! \n1127.0.0.1 | cat &#x2F;tmp&#x2F;nvramconfig&#x2F;RT2860_CONFIG_VLAN\nthis simple command shows the nvram configuration file in the Ping result box.there are many fun parts in this configuration file, like different access levels, SimLock status.\nDifferent Access Levels12345678Login&#x3D;AdministratorPassword&#x3D;M0LT3@4GN3TTelnetPwd&#x3D;root123GuestId&#x3D;adminGuestPassword&#x3D;adminLanguage&#x3D;enVipLogin&#x3D;VIPVipPassword&#x3D;V!P83869000\nas you can see, the admin is actually the guest and the Administrator user is the real admin, I don’t know much about the VIP user.and the Telnet Password is root123 which is so weak! but the good point is telnet is disabled by default. \nso how can we enable Telnet !? it’s simple, we should change the CSS =)if we execute the following js command in the System Maintenance page we can enable the Debug Mode and Telnet.\n1$(&quot;:hidden&quot;).show() ;\nbefore executing :\nafter executing :\nSuper Cookieif we put the following cookie Cookie: kz_userid=Administrator:1  in the cookie jar, we can get access to the CPE without any password! it’s fun and scary at the same time but this device is a Chinese one so it’s normal :)\nDeep Inspection of GoAheadwhat is syscmd?“syscmd.asp” is a page that you can execute shell commands! but it’s password protected and cookie protected (requires authentication)as far as we had the Super Cookie we can bypass the authentication but what about the password ?! it’s quite simple, in this version the password is super1234, and boom! we can execute all commands exactly inside the web page!\nwhat if the device was sim locked?let’s dig into the binary!2 lines refer to the SimCard Restrictions, an asp page, and a form handler that handles the content of that asp page.if we open 192.168.1.1/lte/simcardinfo.asp using administrator credentials or the supercookie we can simply disable the restrictions!if we open the page with admin (guest) credentials we should use the js command to show the hidden parts.\n","dateCreated":"2021-01-21T01:29:02+03:30","dateModified":"2021-01-21T02:39:42+03:30","datePublished":"2021-01-21T01:29:02+03:30","description":"","headline":"AirMaster TD-LTE CPE Security Analysis","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../http:/blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../http:/blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/","keywords":"Security, Hardware Hacking"}</script>
     <meta name="description" content="AirMaster is a product family of KZ Broadband Technology “KZTech”.There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base.  in this post, I will discuss the 3000 model">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="AirMaster TD-LTE CPE Security Analysis">
-<meta property="og:url" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/index.html">
+<meta property="og:url" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/index.html">
 <meta property="og:site_name" content="Tech With K">
 <meta property="og:description" content="AirMaster is a product family of KZ Broadband Technology “KZTech”.There are numerous models such as 3000,3100,3100e,3100v that use the same firmware base.  in this post, I will discuss the 3000 model">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/before-js.png">
-<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/after-js.png">
-<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/syscmd.png">
-<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/airmaster-syscmd.png">
-<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/lte.png">
-<meta property="og:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/restrict.png">
+<meta property="og:image" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/before-js.png">
+<meta property="og:image" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/after-js.png">
+<meta property="og:image" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/syscmd.png">
+<meta property="og:image" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/airmaster-syscmd.png">
+<meta property="og:image" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/lte.png">
+<meta property="og:image" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/restrict.png">
 <meta property="article:published_time" content="2021-01-20T21:59:02.000Z">
 <meta property="article:modified_time" content="2021-01-20T23:09:42.076Z">
 <meta property="article:author" content="Koorosh">
 <meta property="article:tag" content="Security">
 <meta property="article:tag" content="Hardware Hacking">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/before-js.png">
+<meta name="twitter:image" content="http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/before-js.png">
 <meta name="twitter:creator" content="@kooroshh">
     
     
@@ -361,7 +361,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -374,7 +374,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -387,7 +387,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -490,7 +490,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -503,7 +503,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -516,7 +516,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -560,7 +560,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                         aria-label="Share on Facebook"
                     >
                         <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
@@ -573,7 +573,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://twitter.com/intent/tweet?text=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                        href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                         aria-label="Share on Twitter"
                     >
                         <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
@@ -586,7 +586,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://plus.google.com/share?url=http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/"
+                        href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/"
                         aria-label="Share on Google+"
                     >
                         <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
@@ -642,7 +642,7 @@
     
         <script>
           var disqus_config = function() {
-            this.page.url = 'http://kooroshh.github.io/2021/01/21/AirMaster-Security-Analysis/';
+            this.page.url = 'http://blog.koorosh.dev/2021/01/21/AirMaster-Security-Analysis/';
               
             this.page.identifier = '2021/01/21/AirMaster-Security-Analysis/';
               

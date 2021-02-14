@@ -6,29 +6,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content="Tech With K">
-    <title>TSCOBox Security Analysis - Tech With K</title>
+    <title>Defence Against The Dark Arts - Tech With K</title>
     <meta name="author" content="Koorosh">
     
     
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"What is TSCO Box?TSCO Box is an android tv box based on AllWinner H3 SoC, originally made by “WeChip” which re-branded as “TSCO” with some software modifications.\nJourneyI don’t own this box personally but I’ve found the software upgrade file from the Internet.there are so many modified versions available on the Internet but fortunately, I’ve found the exact software upgrade file from their website.\nthe software upgrade file was actually an apk file, which upgrades the main launcher of the box.That’s all! the whole software modifications were just an android launcher on top of the Chinese firmware.\nInsecure API ImplementationThis launcher is too funny, for example, the launcher process the user registration at the same time, it sends the token key to the user exactly from itself! let’s see the code :\nnow as you can see in the above image, the SMS Gateway API is hardcoded exactly in the application with the credentials!!!\nbut let’s dig in deeper\nRemote Command ExecutionThere is a service that checks the remote APIs availabilities using the PING commandin the LB Finder Service, there is a method named isOnline that accepts a string and pass it to the PING command\n123456789101112public boolean isOnline(String str) &#123;       Runtime runtime &#x3D; Runtime.getRuntime();       try &#123;           if (runtime.exec(&quot;&#x2F;system&#x2F;bin&#x2F;ping -c 1 &quot; + str).waitFor() &#x3D;&#x3D; 0) &#123;               return true;           &#125;           return false;       &#125; catch (IOException | InterruptedException e) &#123;           e.printStackTrace();           return false;       &#125;   &#125;\nthe usage flow is like the below image :\nnow what if we intercept the JsonNodeRequest and modify the IP to the 127.0.0.1 | rm -rf /sdcard? yes! that’s possible because there is no IP validation in the code.as far as the launcher is a kind of system app and the application manifest contains the following permissions it’s quite dangerous\n12345678910111213141516171819&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_NETWORK_STATE&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.SET_WALLPAPER&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.CHANGE_WIFI_STATE&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_WIFI_STATE&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.INTERNET&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.READ_EXTERNAL_STORAGE&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_FINE_LOCATION&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_COARSE_LOCATION&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.REQUEST_INSTALL_PACKAGES&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.RECEIVE_BOOT_COMPLETED&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.READ_PHONE_STATE&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_SETTINGS&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_SECURE_SETTINGS&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;com.android.providers.tv.permission.WRITE_EPG_DATA&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;com.android.providers.tv.permission.READ_EPG_DATA&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;android.permission.WAKE_LOCK&quot;&#x2F;&gt;&lt;uses-permission android:name&#x3D;&quot;com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE&quot;&#x2F;&gt;\nRemote API InsecurityThe remote API was not secure at all, that was the most insecure web application I’ve ever seen.it was written in Python using Django Framework with Debug Mode enabled which routed me to dump the whole user data, device locations, and details of every single piece of hardware they ever sold! \nwhole communications are based on HTTP and IP address which means almost everyone can intercept and modify the requests and responses\n","dateCreated":"2021-01-31T11:05:40+03:30","dateModified":"2021-01-31T21:09:52+03:30","datePublished":"2021-01-31T11:05:40+03:30","description":"","headline":"TSCOBox Security Analysis","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../http:/blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../http:/blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/","keywords":"Security, Application Security Analysis"}</script>
-    <meta name="description" content="What is TSCO Box?TSCO Box is an android tv box based on AllWinner H3 SoC, originally made by “WeChip” which re-branded as “TSCO” with some software modifications. JourneyI don’t own this box personall">
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"Defence Against The Dark Arts - Finding User’s Real IP Addressone of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in some cases) when the user is behind a Proxy Server or VPN.\nnow if we utilize the user’s browser and force the browser to send the user’s real IP address from the user side, the problem can be solved.\nthere are lots of ways to enumerate the user’s NICs but in most situations, users are behind a NAT, which means their NICs IP Addresses are not useful! that’s where we need WebRTC API.\nWhat is WebRTC?WebRTC is a P2P communication API that supports NAT Traversal and works in almost all browsers without the need to install any addons or plugins.\nICE Candidatesto establish a connection between two peers, each peer should send its network information to the other one, including IP addresses.\nPoCthe following javascript code logs the user’s available IP addresses to the console.\n123456789101112window.RTCPeerConnection &#x3D; window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;var connection &#x3D; new RTCPeerConnection(&#123;        &quot;iceServers&quot;: [&#123;            url: &quot;stun:stun.l.google.com:19302&quot;        &#125;]    &#125;);connection.createDataChannel(&quot;&quot;);connection.createOffer(connection.setLocalDescription.bind(connection), ()&#x3D;&gt;&#123;&#125;);connection.onicecandidate &#x3D; function(ice) &#123;    if (ice.candidate !&#x3D; null)        console.log(ice.candidate.address);&#125;;\nnow if we create a UUID for each session and send the candidate(s) with that session to the server, we can identify the user’s the real IP address\n","dateCreated":"2021-02-14T17:01:38+03:30","dateModified":"2021-02-14T17:34:45+03:30","datePublished":"2021-02-14T17:01:38+03:30","description":"","headline":"Defence Against The Dark Arts","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../http:/blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../http:/blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/","keywords":"Security, Web"}</script>
+    <meta name="description" content="Defence Against The Dark Arts - Finding User’s Real IP Addressone of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in">
 <meta property="og:type" content="blog">
-<meta property="og:title" content="TSCOBox Security Analysis">
-<meta property="og:url" content="http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/index.html">
+<meta property="og:title" content="Defence Against The Dark Arts">
+<meta property="og:url" content="http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/index.html">
 <meta property="og:site_name" content="Tech With K">
-<meta property="og:description" content="What is TSCO Box?TSCO Box is an android tv box based on AllWinner H3 SoC, originally made by “WeChip” which re-branded as “TSCO” with some software modifications. JourneyI don’t own this box personall">
+<meta property="og:description" content="Defence Against The Dark Arts - Finding User’s Real IP Addressone of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/15657561632.jpg">
-<meta property="og:image" content="http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/sms.png">
-<meta property="og:image" content="http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/rce-flow.png">
-<meta property="article:published_time" content="2021-01-31T07:35:40.000Z">
-<meta property="article:modified_time" content="2021-01-31T17:39:52.009Z">
+<meta property="article:published_time" content="2021-02-14T13:31:38.000Z">
+<meta property="article:modified_time" content="2021-02-14T14:04:45.406Z">
 <meta property="article:author" content="Koorosh">
 <meta property="article:tag" content="Security">
-<meta property="article:tag" content="Application Security Analysis">
+<meta property="article:tag" content="Web">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/15657561632.jpg">
 <meta name="twitter:creator" content="@kooroshh">
     
     
@@ -253,20 +249,20 @@
         <div class="post-header main-content-wrap text-left">
     
         <h1 class="post-title">
-            TSCOBox Security Analysis
+            Defence Against The Dark Arts
         </h1>
     
     
         <div class="post-meta">
-    <time datetime="2021-01-31T11:05:40+03:30">
+    <time datetime="2021-02-14T17:01:38+03:30">
 	
-		    Jan 31, 2021
+		    Feb 14, 2021
     	
     </time>
     
         <span>in </span>
         
-    <a class="category-link" href="../../../../categories/Application-Security-Analysis/">Application Security Analysis</a>, <a class="category-link" href="../../../../categories/Application-Security-Analysis/Security/">Security</a>
+    <a class="category-link" href="../../../../categories/Web/">Web</a>, <a class="category-link" href="../../../../categories/Web/Security/">Security</a>
 
 
     
@@ -278,19 +274,14 @@
     
     <div class="post-content markdown">
         <div class="main-content-wrap">
-            <h3 id="What-is-TSCO-Box"><a href="#What-is-TSCO-Box" class="headerlink" title="What is TSCO Box?"></a>What is TSCO Box?</h3><p>TSCO Box is an android tv box based on AllWinner H3 SoC, originally made by “WeChip” which re-branded as “TSCO” with some software modifications.<br><img src="/2021/01/31/TSCOBox-Security-Analysis/15657561632.jpg" alt="WeChip R69"></p>
-<h3 id="Journey"><a href="#Journey" class="headerlink" title="Journey"></a>Journey</h3><p>I don’t own this box personally but I’ve found the software upgrade file from the Internet.<br>there are so many modified versions available on the Internet but fortunately, I’ve found the exact software upgrade file from their website.</p>
-<p>the software upgrade file was actually an apk file, which upgrades the main launcher of the box.<br>That’s all! the whole software modifications were just an android launcher on top of the Chinese firmware.</p>
-<h3 id="Insecure-API-Implementation"><a href="#Insecure-API-Implementation" class="headerlink" title="Insecure API Implementation"></a>Insecure API Implementation</h3><p>This launcher is too funny, for example, the launcher process the user registration at the same time, it sends the token key to the user exactly from itself! let’s see the code :<br><img src="/2021/01/31/TSCOBox-Security-Analysis/sms.png" alt="SMS"></p>
-<p>now as you can see in the above image, the SMS Gateway API is hardcoded exactly in the application with the credentials!!!</p>
-<p>but let’s dig in deeper</p>
-<h3 id="Remote-Command-Execution"><a href="#Remote-Command-Execution" class="headerlink" title="Remote Command Execution"></a>Remote Command Execution</h3><p>There is a service that checks the remote APIs availabilities using the PING command<br>in the LB Finder Service, there is a method named isOnline that accepts a string and pass it to the PING command</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public boolean isOnline(String str) &#123;</span><br><span class="line">       Runtime runtime &#x3D; Runtime.getRuntime();</span><br><span class="line">       try &#123;</span><br><span class="line">           if (runtime.exec(&quot;&#x2F;system&#x2F;bin&#x2F;ping -c 1 &quot; + str).waitFor() &#x3D;&#x3D; 0) &#123;</span><br><span class="line">               return true;</span><br><span class="line">           &#125;</span><br><span class="line">           return false;</span><br><span class="line">       &#125; catch (IOException | InterruptedException e) &#123;</span><br><span class="line">           e.printStackTrace();</span><br><span class="line">           return false;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-<p>the usage flow is like the below image :<br><img src="/2021/01/31/TSCOBox-Security-Analysis/rce-flow.png" alt="flow"></p>
-<p>now what if we intercept the JsonNodeRequest and modify the IP to the <code>127.0.0.1 | rm -rf /sdcard</code>? yes! that’s possible because there is no IP validation in the code.<br>as far as the launcher is a kind of system app and the application manifest contains the following permissions it’s quite dangerous</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_NETWORK_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.SET_WALLPAPER&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.CHANGE_WIFI_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_WIFI_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.INTERNET&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.READ_EXTERNAL_STORAGE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_FINE_LOCATION&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.ACCESS_COARSE_LOCATION&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.REQUEST_INSTALL_PACKAGES&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.RECEIVE_BOOT_COMPLETED&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.READ_PHONE_STATE&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_SETTINGS&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WRITE_SECURE_SETTINGS&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;com.android.providers.tv.permission.WRITE_EPG_DATA&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;com.android.providers.tv.permission.READ_EPG_DATA&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;android.permission.WAKE_LOCK&quot;&#x2F;&gt;</span><br><span class="line">&lt;uses-permission android:name&#x3D;&quot;com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE&quot;&#x2F;&gt;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h3 id="Remote-API-Insecurity"><a href="#Remote-API-Insecurity" class="headerlink" title="Remote API Insecurity"></a>Remote API Insecurity</h3><p>The remote API was not secure at all, that was the most insecure web application I’ve ever seen.<br>it was written in Python using Django Framework with Debug Mode enabled which routed me to dump the whole user data, device locations, and details of every single piece of hardware they ever sold! </p>
-<p>whole communications are based on HTTP and IP address which means almost everyone can intercept and modify the requests and responses</p>
+            <h3 id="Defence-Against-The-Dark-Arts-Finding-User’s-Real-IP-Address"><a href="#Defence-Against-The-Dark-Arts-Finding-User’s-Real-IP-Address" class="headerlink" title="Defence Against The Dark Arts - Finding User’s Real IP Address"></a>Defence Against The Dark Arts - Finding User’s Real IP Address</h3><p>one of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in some cases) when the user is behind a Proxy Server or VPN.</p>
+<p>now if we utilize the user’s browser and force the browser to send the user’s real IP address from the user side, the problem can be solved.</p>
+<p>there are lots of ways to enumerate the user’s NICs but in most situations, users are behind a NAT, which means their NICs IP Addresses are not useful! that’s where we need WebRTC API.</p>
+<h3 id="What-is-WebRTC"><a href="#What-is-WebRTC" class="headerlink" title="What is WebRTC?"></a>What is WebRTC?</h3><p>WebRTC is a P2P communication API that supports NAT Traversal and works in almost <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/WebRTC#Support">all browsers</a> without the need to install any addons or plugins.</p>
+<h3 id="ICE-Candidates"><a href="#ICE-Candidates" class="headerlink" title="ICE Candidates"></a>ICE Candidates</h3><p>to establish a connection between two peers, each peer should send its network information to the other one, including IP addresses.</p>
+<h3 id="PoC"><a href="#PoC" class="headerlink" title="PoC"></a>PoC</h3><p>the following javascript code logs the user’s available IP addresses to the console.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">window.RTCPeerConnection &#x3D; window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;</span><br><span class="line">var connection &#x3D; new RTCPeerConnection(&#123;</span><br><span class="line">        &quot;iceServers&quot;: [&#123;</span><br><span class="line">            url: &quot;stun:stun.l.google.com:19302&quot;</span><br><span class="line">        &#125;]</span><br><span class="line">    &#125;);</span><br><span class="line">connection.createDataChannel(&quot;&quot;);</span><br><span class="line">connection.createOffer(connection.setLocalDescription.bind(connection), ()&#x3D;&gt;&#123;&#125;);</span><br><span class="line">connection.onicecandidate &#x3D; function(ice) &#123;</span><br><span class="line">    if (ice.candidate !&#x3D; null)</span><br><span class="line">        console.log(ice.candidate.address);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>now if we create a UUID for each session and send the candidate(s) with that session to the server, we can identify the user’s the real IP address</p>
 
             
 
@@ -302,7 +293,7 @@
             <div class="post-footer-tags">
                 <span class="text-color-light text-small">TAGGED IN</span><br/>
                 
-    <a class="tag tag--primary tag--small t-none-link" href="../../../../tags/Application-Security-Analysis/" rel="tag">Application Security Analysis</a> <a class="tag tag--primary tag--small t-none-link" href="../../../../tags/Security/" rel="tag">Security</a>
+    <a class="tag tag--primary tag--small t-none-link" href="../../../../tags/Security/" rel="tag">Security</a> <a class="tag tag--primary tag--small t-none-link" href="../../../../tags/Web/" rel="tag">Web</a>
 
             </div>
         
@@ -312,14 +303,11 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="../../../02/14/Defence-Against-The-Dark-Arts/"
-                    data-tooltip="Defence Against The Dark Arts"
-                    aria-label="PREVIOUS: Defence Against The Dark Arts"
-                >
-                    
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
                     </a>
@@ -329,9 +317,9 @@
                     
                 <a
                     class="post-action-btn btn btn--default tooltip--top"
-                    href="../../21/AirMaster-Security-Analysis/"
-                    data-tooltip="AirMaster TD-LTE CPE Security Analysis"
-                    aria-label="NEXT: AirMaster TD-LTE CPE Security Analysis"
+                    href="../../../01/31/TSCOBox-Security-Analysis/"
+                    data-tooltip="TSCOBox Security Analysis"
+                    aria-label="NEXT: TSCOBox Security Analysis"
                 >
                     
                         <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
@@ -356,7 +344,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -369,7 +357,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -382,7 +370,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -441,14 +429,11 @@
         <ul class="post-actions post-action-nav">
             <li class="post-action">
                 
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="../../../02/14/Defence-Against-The-Dark-Arts/"
-                    data-tooltip="Defence Against The Dark Arts"
-                    aria-label="PREVIOUS: Defence Against The Dark Arts"
-                >
-                    
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
                         <i class="fa fa-angle-left" aria-hidden="true"></i>
                         <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
                     </a>
@@ -458,9 +443,9 @@
                     
                 <a
                     class="post-action-btn btn btn--default tooltip--top"
-                    href="../../21/AirMaster-Security-Analysis/"
-                    data-tooltip="AirMaster TD-LTE CPE Security Analysis"
-                    aria-label="NEXT: AirMaster TD-LTE CPE Security Analysis"
+                    href="../../../01/31/TSCOBox-Security-Analysis/"
+                    data-tooltip="TSCOBox Security Analysis"
+                    aria-label="NEXT: TSCOBox Security Analysis"
                 >
                     
                         <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
@@ -485,7 +470,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -498,7 +483,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -511,7 +496,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -555,7 +540,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                         aria-label="Share on Facebook"
                     >
                         <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
@@ -568,7 +553,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                        href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                         aria-label="Share on Twitter"
                     >
                         <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
@@ -581,7 +566,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/"
+                        href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                         aria-label="Share on Google+"
                     >
                         <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
@@ -637,9 +622,9 @@
     
         <script>
           var disqus_config = function() {
-            this.page.url = 'http://blog.koorosh.dev/2021/01/31/TSCOBox-Security-Analysis/';
+            this.page.url = 'http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/';
               
-            this.page.identifier = '2021/01/31/TSCOBox-Security-Analysis/';
+            this.page.identifier = '2021/02/14/Defence-Against-The-Dark-Arts/';
               
           };
           (function() {
