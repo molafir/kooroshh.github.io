@@ -11,11 +11,11 @@
     
     
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"Defence Against The Dark Arts - Finding User’s Real IP Addressone of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in some cases) when the user is behind a Proxy Server or VPN.\nnow if we utilize the user’s browser and force the browser to send the user’s real IP address from the user side, the problem can be solved.\nthere are lots of ways to enumerate the user’s NICs but in most situations, users are behind a NAT, which means their NICs IP Addresses are not useful! that’s where we need WebRTC API.\nWhat is WebRTC?WebRTC is a P2P communication API that supports NAT Traversal and works in almost all browsers without the need to install any addons or plugins.\nICE Candidatesto establish a connection between two peers, each peer should send its network information to the other one, including IP addresses.\nPoCthe following javascript code logs the user’s available IP addresses to the console.\n123456789101112window.RTCPeerConnection &#x3D; window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;var connection &#x3D; new RTCPeerConnection(&#123;        &quot;iceServers&quot;: [&#123;            url: &quot;stun:stun.l.google.com:19302&quot;        &#125;]    &#125;);connection.createDataChannel(&quot;&quot;);connection.createOffer(connection.setLocalDescription.bind(connection), ()&#x3D;&gt;&#123;&#125;);connection.onicecandidate &#x3D; function(ice) &#123;    if (ice.candidate !&#x3D; null)        console.log(ice.candidate.address);&#125;;\nnow if we create a UUID for each session and send the candidate(s) with that session to the server, we can identify the user’s the real IP address\n","dateCreated":"2021-02-14T17:01:38+03:30","dateModified":"2021-02-14T17:34:45+03:30","datePublished":"2021-02-14T17:01:38+03:30","description":"","headline":"Defence Against The Dark Arts","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../http:/blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../http:/blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/","keywords":"Security, Web"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"Defence Against The Dark Arts - Finding User’s Real IP Addressone of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in some cases) when the user is behind a Proxy Server or VPN.\nnow if we utilize the user’s browser and force the browser to send the user’s real IP address from the user side, the problem can be solved.\nthere are lots of ways to enumerate the user’s NICs but in most situations, users are behind a NAT, which means their NICs IP Addresses are not useful! that’s where we need WebRTC API.\nWhat is WebRTC?WebRTC is a P2P communication API that supports NAT Traversal and works in almost all browsers without the need to install any addons or plugins.\nICE Candidatesto establish a connection between two peers, each peer should send its network information to the other one, including IP addresses.\nPoCthe following javascript code logs the user’s available IP addresses to the console.\n123456789101112window.RTCPeerConnection &#x3D; window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;var connection &#x3D; new RTCPeerConnection(&#123;        &quot;iceServers&quot;: [&#123;            url: &quot;stun:stun.l.google.com:19302&quot;        &#125;]    &#125;);connection.createDataChannel(&quot;&quot;);connection.createOffer(connection.setLocalDescription.bind(connection), ()&#x3D;&gt;&#123;&#125;);connection.onicecandidate &#x3D; function(ice) &#123;    if (ice.candidate !&#x3D; null)        console.log(ice.candidate.address);&#125;;\nnow if we create a UUID for each session and send the candidate(s) with that session to the server, we can identify the user’s the real IP address\n","dateCreated":"2021-02-14T17:01:38+03:30","dateModified":"2021-02-14T17:34:45+03:30","datePublished":"2021-02-14T17:01:38+03:30","description":"","headline":"Defence Against The Dark Arts","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../https:/blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../https:/blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/","keywords":"Security, Web"}</script>
     <meta name="description" content="Defence Against The Dark Arts - Finding User’s Real IP Addressone of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in">
 <meta property="og:type" content="blog">
 <meta property="og:title" content="Defence Against The Dark Arts">
-<meta property="og:url" content="http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/index.html">
+<meta property="og:url" content="https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/index.html">
 <meta property="og:site_name" content="Tech With K">
 <meta property="og:description" content="Defence Against The Dark Arts - Finding User’s Real IP Addressone of the biggest challenges in web security and web development is finding the user’s real IP address (and identify the GEO Location in">
 <meta property="og:locale" content="en_US">
@@ -344,7 +344,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -357,7 +357,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -370,7 +370,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                    target="new" href="https://plus.google.com/share?url=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -470,7 +470,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Facebook"
                     aria-label="Share on Facebook"
                 >
@@ -483,7 +483,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Twitter"
                     aria-label="Share on Twitter"
                 >
@@ -496,7 +496,7 @@
             <li class="post-action hide-xs">
                 <a
                     class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                    target="new" href="https://plus.google.com/share?url=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                     title="Share on Google+"
                     aria-label="Share on Google+"
                 >
@@ -540,7 +540,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                         aria-label="Share on Facebook"
                     >
                         <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
@@ -553,7 +553,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://twitter.com/intent/tweet?text=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                        href="https://twitter.com/intent/tweet?text=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                         aria-label="Share on Twitter"
                     >
                         <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
@@ -566,7 +566,7 @@
                     <a
                         class="share-option-btn"
                         target="new"
-                        href="https://plus.google.com/share?url=http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
+                        href="https://plus.google.com/share?url=https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/"
                         aria-label="Share on Google+"
                     >
                         <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
@@ -622,7 +622,7 @@
     
         <script>
           var disqus_config = function() {
-            this.page.url = 'http://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/';
+            this.page.url = 'https://blog.koorosh.dev/2021/02/14/Defence-Against-The-Dark-Arts/';
               
             this.page.identifier = '2021/02/14/Defence-Against-The-Dark-Arts/';
               
