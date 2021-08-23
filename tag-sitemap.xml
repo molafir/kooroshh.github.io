@@ -3,6 +3,20 @@
 
 
     <url>
+        <loc>https://blog.koorosh.dev/tags/Malware-Analysis/</loc>
+        <lastmod>2021-08-23T20:23:17.884Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
+        <loc>https://blog.koorosh.dev/tags/Malware/</loc>
+        <lastmod>2021-08-23T20:23:17.884Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.2</priority>
+    </url>
+
+    <url>
         <loc>https://blog.koorosh.dev/tags/Web/</loc>
         <lastmod>2021-02-14T14:04:45.406Z</lastmod>
         <changefreq>weekly</changefreq>
