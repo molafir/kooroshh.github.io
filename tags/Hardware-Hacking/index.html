@@ -246,6 +246,75 @@
                     
                         <a
                             class="link-unstyled"
+                            href="../../2021/11/20/AG3100D/"
+                            aria-label=": AG3100D"
+                        >
+                            AG3100D
+                        </a>
+                    
+                </h1>
+                <div class="postShorten-meta">
+    <time datetime="2021-11-20T15:05:09+03:30">
+	
+		    Nov 20, 2021
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="../../categories/Hardware-Hacking/">Hardware Hacking</a>, <a class="category-link" href="../../categories/Hardware-Hacking/Security/">Security</a>
+
+
+    
+</div>
+
+            </div>
+            
+                <div class="postShorten-content">
+                    <p>AirMaster AG3100D Security Analysis</p>
+<p>AG3100D is the newest variant of 3100 families with the support of 4G/LTE.<br>the whole firmware has changed (probably the board has changed too, I haven’t opened the device box :/)<br>there are some improvements on the new firmware, but most of the previous enhancements are lost due to making the latest firmware.</p>
+<h1 id="Password-Hashing-good-bad-and-the-ugly"><a href="#Password-Hashing-good-bad-and-the-ugly" class="headerlink" title="Password Hashing (good, bad, and the ugly)"></a>Password Hashing (good, bad, and the ugly)</h1><p>user passwords are hashed in this firmware using HMAC-SHA1, but the problem is, it’s getting hashed on the client-side, and the hash gets checked in the embedded web server against the hashed password stored in the NVRAM.<br>you can read the javascript hashing code </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var hmacObj &#x3D; new jsSHA(&quot;SHA-1&quot;, &quot;TEXT&quot;);</span><br><span class="line">hmacObj.setHMACKey(&quot;*kztech*&quot;, &quot;TEXT&quot;);</span><br><span class="line">hmacObj.update(&quot;admin&quot;);</span><br><span class="line">g_value &#x3D; hmacObj.getHMAC(&quot;HEX&quot;);</span><br></pre></td></tr></table></figure>
+<p>The good part is the attacker can’t read the user’s passwords, but thanks to hashing in the client-side, he can replace his passwords if he can get access from NVRAM!</p>
+<h1 id="Insecure-User-Role"><a href="#Insecure-User-Role" class="headerlink" title="Insecure User Role"></a>Insecure User Role</h1><p>like the previous versions of the firmware, most of the pages in the admin interface are invisible for the Guest user (admin), at the same time CGI handler won’t check the user access role in the incoming requests, so if you have knowledge about the firmware and it’s HTTP requests, you can modify the whole settings with the lowest user role.</p>
+<p>for example, the following URL can be accessed through the Guest Role to change the Sim Lock functionality<br><a target="_blank" rel="noopener" href="http://192.168.1.1/lte/ScanOperator.asp">http://192.168.1.1/lte/ScanOperator.asp</a> </p>
+<h1 id="Insecure-Root-Password"><a href="#Insecure-Root-Password" class="headerlink" title="Insecure Root Password"></a>Insecure Root Password</h1><p>the /etc/passwd contains a BSD hashed password: <code>$1$0kUTQMej$d1Gag3dRMwvuVjlYSsHIf.</code><br>after 12 hours of brute-forcing, the password was root123 !!!<br>so the telnet/ssh credentials are the root/root123, which is so insecure.<br>(honestly, I blame myself why I didn’t check the dictionary and waste 12 hours of my GPU power =) )</p>
+<h1 id="Insecure-Format-String"><a href="#Insecure-Format-String" class="headerlink" title="Insecure Format String"></a>Insecure Format String</h1><p>ping, traceroute, iperf commands suffer from insecure formatting, as you can see the following code : </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">.text:00045280 loc_45280                               ; CODE XREF: .text:00045258↑j</span><br><span class="line">.text:00045280                 LDR     R0, &#x3D;aIpProto   ; &quot;ip_proto&quot;</span><br><span class="line">.text:00045284                 LDR     R1, &#x3D;a0_10      ; &quot;0&quot;</span><br><span class="line">.text:00045288                 BL      sub_35188</span><br><span class="line">.text:0004528C                 MOV     R3, R0</span><br><span class="line">.text:00045290                 CMP     R3, #0</span><br><span class="line">.text:00045294                 BEQ     loc_452C4</span><br><span class="line">.text:00045298                 SUB     R3, R11, #0x610</span><br><span class="line">.text:0004529C                 SUB     R3, R3, #4</span><br><span class="line">.text:000452A0                 SUB     R3, R3, #8</span><br><span class="line">.text:000452A4                 LDR     R2, &#x3D;aVarSystemComma ; &quot;&#x2F;var&#x2F;system_command.log&quot;</span><br><span class="line">.text:000452A8                 STR     R2, [SP]</span><br><span class="line">.text:000452AC                 MOV     R0, R3</span><br><span class="line">.text:000452B0                 MOV     R1, #0x200</span><br><span class="line">.text:000452B4                 LDR     R2, &#x3D;aPing4SC41S21 ; &quot;ping -4 %s -c 4 1&gt;%s 2&gt;&amp;1&quot;</span><br><span class="line">.text:000452B8                 LDR     R3, [R11,#-0xC]</span><br><span class="line">.text:000452BC                 BL      snprintf</span><br><span class="line">.text:000452C0                 B       loc_4538C</span><br></pre></td></tr></table></figure>
+<p>Attackers can inject the system commands in the ping address, which leads to Command Execution.<br>The fun part is, the ping address only validates on the client-side using javascript just on ping’s mouse down event, which means if you press Enter, it won’t get validated! </p>
+<p>here is the list of files in “/usr/www” folder which you can access manually with any credentials.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">ALG.asp                         SetMain.asp                     config.asp</span><br><span class="line">ALG_a.asp                       Snmp.asp                        confirm_update.asp</span><br><span class="line">About.htm                       Snmp_a.asp                      default.asp</span><br><span class="line">Alive.asp                       Snmp_b.asp                      fails.asp</span><br><span class="line">Application.asp                 Status.asp                      gps_status.asp</span><br><span class="line">Atprtect.asp                    Status_Device.asp               gps_status_req.asp</span><br><span class="line">Auto_update.asp                 Status_Lan.asp                  http_live.asp</span><br><span class="line">Bridge_vlan.asp                 Status_Lan.live.asp             images</span><br><span class="line">DDNS.asp                        Status_Network.asp              index.asp</span><br><span class="line">DMZ.asp                         Status_Network_Router.asp       index_static.asp</span><br><span class="line">DevManagement.asp               Status_Network_Router.live.asp  indexs.js</span><br><span class="line">DeviceManagement.asp            Status_Network_Router_usb.asp   iperf.asp</span><br><span class="line">Factory_Defaults.asp            Status_Router.asp               ipref_Ref.asp</span><br><span class="line">Fail.asp                        Status_Router.live.asp          js</span><br><span class="line">Fail_s.asp                      Status_bridge_Lan.asp           key.pem</span><br><span class="line">Fail_u_decomp_err.asp           Status_nomo_Router.asp          kz_mifi.css</span><br><span class="line">Fail_u_malloc_err.asp           Status_usNetwork_Router.asp     kz_nomifi.css</span><br><span class="line">Fail_u_model_err.asp            Status_usbridge_Lan.asp         lang_pack</span><br><span class="line">Fail_u_param_err.asp            Success_rest.asp                login.asp</span><br><span class="line">Fail_u_prgfile_err.asp          Success_s.asp                   login_fa.asp</span><br><span class="line">Fail_u_prgsize_err.asp          Success_u_remote.asp            login_fa_plain.asp</span><br><span class="line">Fail_u_s.asp                    Success_u_s.asp                 login_unitac.asp</span><br><span class="line">Fail_u_token_err.asp            SysInfo.htm                     logout.asp</span><br><span class="line">FilterIPMAC.asp                 SystemMaintenance.asp           lte</span><br><span class="line">FilterSummary.asp               SystemReboot.asp                oma.asp</span><br><span class="line">Filters.asp                     SystemReset.asp                 opmode.asp</span><br><span class="line">Filters_a.asp                   SystemReset_us.asp              ping.asp</span><br><span class="line">Firewall.asp                    SystemReset_vs.asp              style</span><br><span class="line">Forward.asp                     SystemSecurity.asp              style_mifi.css</span><br><span class="line">ForwardSpec.asp                 Tc.asp                          style_nomifi.css</span><br><span class="line">Forward_alsatisSpec.asp         Traceroute.asp                  tr069</span><br><span class="line">Lan.asp                         Triggering.asp                  update_check.asp</span><br><span class="line">Management.asp                  UPnP.asp                        user_Status.asp</span><br><span class="line">Network.asp                     UPnP.live.asp                   user_ltesms.asp</span><br><span class="line">Ntp.asp                         Upgrade.asp                     user_manage.asp</span><br><span class="line">NvManagement.asp                UsbManagement.asp               user_network.asp</span><br><span class="line">PIE.htc                         UsbNetworking.asp               user_ping.asp</span><br><span class="line">Port_Services.asp               UsbUPnPNetworking.asp           user_upnp.asp</span><br><span class="line">QoS.asp                         UserFactoryDefaults.asp         user_vpnset.asp</span><br><span class="line">Reboot.asp                      UserSetup.asp                   vpnset.asp</span><br><span class="line">Restore_Ref.asp                 Vlancf.asp                      vpnset_Ref.asp</span><br><span class="line">RouteTable.asp                  cbrs                            wifi</span><br><span class="line">Routing.asp                     cert.pem                        wifi_status.asp</span><br><span class="line">Services.asp                    common.js                       wifi_status_req.asp</span><br></pre></td></tr></table></figure>
+                    
+                        
+
+
+                    
+                    
+                        <p>
+                            <a
+                                href="../../2021/11/20/AG3100D/#post-footer"
+                                class="postShorten-excerpt_link link"
+                                aria-label=""
+                            >
+                                Comment and share
+                            </a>
+                        </p>
+                    
+                </div>
+            
+        </div>
+        
+    </article>
+    
+    
+    <article class="postShorten postShorten--thumbnailimg-bottom">
+        <div class="postShorten-wrap">
+            
+            <div class="postShorten-header">
+                <h1 class="postShorten-title">
+                    
+                        <a
+                            class="link-unstyled"
                             href="../../2021/01/21/AirMaster-Security-Analysis/"
                             aria-label=": AirMaster TD-LTE CPE Security Analysis"
                         >

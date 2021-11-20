@@ -9,6 +9,14 @@
 
 
     <url>
+        <loc>https://blog.koorosh.dev/2021/11/20/AG3100D/</loc>
+        <lastmod>2021-11-20T11:38:54.930Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
         <loc>https://blog.koorosh.dev/2021/08/23/GenericMalwareAnalysis-1/</loc>
         <lastmod>2021-08-23T20:23:17.884Z</lastmod>
         <changefreq>weekly</changefreq>

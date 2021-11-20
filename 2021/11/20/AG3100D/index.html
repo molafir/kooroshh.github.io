@@ -1,0 +1,649 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="Tech With K">
+    <title>AG3100D - Tech With K</title>
+    <meta name="author" content="Koorosh">
+    
+    
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"},"articleBody":"AirMaster AG3100D Security Analysis\nAG3100D is the newest variant of 3100 families with the support of 4G/LTE.the whole firmware has changed (probably the board has changed too, I haven’t opened the device box :/)there are some improvements on the new firmware, but most of the previous enhancements are lost due to making the latest firmware.\nPassword Hashing (good, bad, and the ugly)user passwords are hashed in this firmware using HMAC-SHA1, but the problem is, it’s getting hashed on the client-side, and the hash gets checked in the embedded web server against the hashed password stored in the NVRAM.you can read the javascript hashing code \n1234var hmacObj &#x3D; new jsSHA(&quot;SHA-1&quot;, &quot;TEXT&quot;);hmacObj.setHMACKey(&quot;*kztech*&quot;, &quot;TEXT&quot;);hmacObj.update(&quot;admin&quot;);g_value &#x3D; hmacObj.getHMAC(&quot;HEX&quot;);\nThe good part is the attacker can’t read the user’s passwords, but thanks to hashing in the client-side, he can replace his passwords if he can get access from NVRAM!\nInsecure User Rolelike the previous versions of the firmware, most of the pages in the admin interface are invisible for the Guest user (admin), at the same time CGI handler won’t check the user access role in the incoming requests, so if you have knowledge about the firmware and it’s HTTP requests, you can modify the whole settings with the lowest user role.\nfor example, the following URL can be accessed through the Guest Role to change the Sim Lock functionalityhttp://192.168.1.1/lte/ScanOperator.asp \nInsecure Root Passwordthe /etc/passwd contains a BSD hashed password: $1$0kUTQMej$d1Gag3dRMwvuVjlYSsHIf.after 12 hours of brute-forcing, the password was root123 !!!so the telnet/ssh credentials are the root/root123, which is so insecure.(honestly, I blame myself why I didn’t check the dictionary and waste 12 hours of my GPU power =) )\nInsecure Format Stringping, traceroute, iperf commands suffer from insecure formatting, as you can see the following code : \n123456789101112131415161718.text:00045280 loc_45280                               ; CODE XREF: .text:00045258↑j.text:00045280                 LDR     R0, &#x3D;aIpProto   ; &quot;ip_proto&quot;.text:00045284                 LDR     R1, &#x3D;a0_10      ; &quot;0&quot;.text:00045288                 BL      sub_35188.text:0004528C                 MOV     R3, R0.text:00045290                 CMP     R3, #0.text:00045294                 BEQ     loc_452C4.text:00045298                 SUB     R3, R11, #0x610.text:0004529C                 SUB     R3, R3, #4.text:000452A0                 SUB     R3, R3, #8.text:000452A4                 LDR     R2, &#x3D;aVarSystemComma ; &quot;&#x2F;var&#x2F;system_command.log&quot;.text:000452A8                 STR     R2, [SP].text:000452AC                 MOV     R0, R3.text:000452B0                 MOV     R1, #0x200.text:000452B4                 LDR     R2, &#x3D;aPing4SC41S21 ; &quot;ping -4 %s -c 4 1&gt;%s 2&gt;&amp;1&quot;.text:000452B8                 LDR     R3, [R11,#-0xC].text:000452BC                 BL      snprintf.text:000452C0                 B       loc_4538C\nAttackers can inject the system commands in the ping address, which leads to Command Execution.The fun part is, the ping address only validates on the client-side using javascript just on ping’s mouse down event, which means if you press Enter, it won’t get validated! \nhere is the list of files in “/usr/www” folder which you can access manually with any credentials.\n1234567891011121314151617181920212223242526272829303132333435363738394041424344ALG.asp                         SetMain.asp                     config.aspALG_a.asp                       Snmp.asp                        confirm_update.aspAbout.htm                       Snmp_a.asp                      default.aspAlive.asp                       Snmp_b.asp                      fails.aspApplication.asp                 Status.asp                      gps_status.aspAtprtect.asp                    Status_Device.asp               gps_status_req.aspAuto_update.asp                 Status_Lan.asp                  http_live.aspBridge_vlan.asp                 Status_Lan.live.asp             imagesDDNS.asp                        Status_Network.asp              index.aspDMZ.asp                         Status_Network_Router.asp       index_static.aspDevManagement.asp               Status_Network_Router.live.asp  indexs.jsDeviceManagement.asp            Status_Network_Router_usb.asp   iperf.aspFactory_Defaults.asp            Status_Router.asp               ipref_Ref.aspFail.asp                        Status_Router.live.asp          jsFail_s.asp                      Status_bridge_Lan.asp           key.pemFail_u_decomp_err.asp           Status_nomo_Router.asp          kz_mifi.cssFail_u_malloc_err.asp           Status_usNetwork_Router.asp     kz_nomifi.cssFail_u_model_err.asp            Status_usbridge_Lan.asp         lang_packFail_u_param_err.asp            Success_rest.asp                login.aspFail_u_prgfile_err.asp          Success_s.asp                   login_fa.aspFail_u_prgsize_err.asp          Success_u_remote.asp            login_fa_plain.aspFail_u_s.asp                    Success_u_s.asp                 login_unitac.aspFail_u_token_err.asp            SysInfo.htm                     logout.aspFilterIPMAC.asp                 SystemMaintenance.asp           lteFilterSummary.asp               SystemReboot.asp                oma.aspFilters.asp                     SystemReset.asp                 opmode.aspFilters_a.asp                   SystemReset_us.asp              ping.aspFirewall.asp                    SystemReset_vs.asp              styleForward.asp                     SystemSecurity.asp              style_mifi.cssForwardSpec.asp                 Tc.asp                          style_nomifi.cssForward_alsatisSpec.asp         Traceroute.asp                  tr069Lan.asp                         Triggering.asp                  update_check.aspManagement.asp                  UPnP.asp                        user_Status.aspNetwork.asp                     UPnP.live.asp                   user_ltesms.aspNtp.asp                         Upgrade.asp                     user_manage.aspNvManagement.asp                UsbManagement.asp               user_network.aspPIE.htc                         UsbNetworking.asp               user_ping.aspPort_Services.asp               UsbUPnPNetworking.asp           user_upnp.aspQoS.asp                         UserFactoryDefaults.asp         user_vpnset.aspReboot.asp                      UserSetup.asp                   vpnset.aspRestore_Ref.asp                 Vlancf.asp                      vpnset_Ref.aspRouteTable.asp                  cbrs                            wifiRouting.asp                     cert.pem                        wifi_status.aspServices.asp                    common.js                       wifi_status_req.asp","dateCreated":"2021-11-20T15:05:09+03:30","dateModified":"2021-11-20T15:08:54+03:30","datePublished":"2021-11-20T15:05:09+03:30","description":"","headline":"AG3100D","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"../../../../https:/blog.koorosh.dev/2021/11/20/AG3100D/"},"publisher":{"@type":"Organization","name":"Koorosh","sameAs":["https://github.com/kooroshh","https://twitter.com/MrOplus","mailto:koorosh@programmer.net"],"image":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace","logo":{"@type":"ImageObject","url":"https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace"}},"url":"../../../../https:/blog.koorosh.dev/2021/11/20/AG3100D/","keywords":"Security, Hardware Hacking"}</script>
+    <meta name="description" content="AirMaster AG3100D Security Analysis AG3100D is the newest variant of 3100 families with the support of 4G&#x2F;LTE.the whole firmware has changed (probably the board has changed too, I haven’t opened the d">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="AG3100D">
+<meta property="og:url" content="https://blog.koorosh.dev/2021/11/20/AG3100D/index.html">
+<meta property="og:site_name" content="Tech With K">
+<meta property="og:description" content="AirMaster AG3100D Security Analysis AG3100D is the newest variant of 3100 families with the support of 4G&#x2F;LTE.the whole firmware has changed (probably the board has changed too, I haven’t opened the d">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-11-20T11:35:09.000Z">
+<meta property="article:modified_time" content="2021-11-20T11:38:54.930Z">
+<meta property="article:author" content="Koorosh">
+<meta property="article:tag" content="Security">
+<meta property="article:tag" content="Hardware Hacking">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:creator" content="@kooroshh">
+    
+    
+        
+    
+    
+        <meta property="og:image" content="https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace?s=640"/>
+    
+    
+    
+    
+    <!--STYLES-->
+    
+<link rel="stylesheet" href="../../../../assets/css/style-z2okfa75rcu6q4cwqnoylclanmmvpaem0pebnxezbgqzaqfa3yvzryednl7s.min.css">
+
+    <!--STYLES END-->
+    
+
+    
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+        
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="../../../../index.html"
+            aria-label=""
+        >
+            Tech With K
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="../../../../#about"
+                aria-label="Open the link: ../../../../#about"
+            >
+        
+        
+            <img class="header-picture" src="https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace?s=90" alt="Author&#39;s picture"/>
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+    
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+            <div class="sidebar-profile">
+                <a
+                    href="../../../../#about"
+                    aria-label="Read more about the author"
+                >
+                    <img class="sidebar-profile-picture" src="https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace?s=110" alt="Author&#39;s picture"/>
+                </a>
+                <h4 class="sidebar-profile-name">Koorosh</h4>
+                
+                    <h5 class="sidebar-profile-bio"><p>Developer / Security Researcher</p>
+</h5>
+                
+            </div>
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../index.html"
+                            
+                            rel="noopener"
+                            title="Home"
+                        >
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../all-categories"
+                            
+                            rel="noopener"
+                            title="Categories"
+                        >
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Categories</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../all-tags"
+                            
+                            rel="noopener"
+                            title="Tags"
+                        >
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../all-archives"
+                            
+                            rel="noopener"
+                            title="Archives"
+                        >
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archives</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../#about"
+                            
+                            rel="noopener"
+                            title="About"
+                        >
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">About</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../https:/github.com/kooroshh"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="GitHub"
+                        >
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../https:/twitter.com/MrOplus"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Twitter"
+                        >
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a
+                            class="sidebar-button-link "
+                            href="../../../../mailto:koorosh@programmer.net"
+                            
+                                target="_blank"
+                            
+                            rel="noopener"
+                            title="Mail"
+                        >
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            AG3100D
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2021-11-20T15:05:09+03:30">
+	
+		    Nov 20, 2021
+    	
+    </time>
+    
+        <span>in </span>
+        
+    <a class="category-link" href="../../../../categories/Hardware-Hacking/">Hardware Hacking</a>, <a class="category-link" href="../../../../categories/Hardware-Hacking/Security/">Security</a>
+
+
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <p>AirMaster AG3100D Security Analysis</p>
+<p>AG3100D is the newest variant of 3100 families with the support of 4G/LTE.<br>the whole firmware has changed (probably the board has changed too, I haven’t opened the device box :/)<br>there are some improvements on the new firmware, but most of the previous enhancements are lost due to making the latest firmware.</p>
+<h1 id="Password-Hashing-good-bad-and-the-ugly"><a href="#Password-Hashing-good-bad-and-the-ugly" class="headerlink" title="Password Hashing (good, bad, and the ugly)"></a>Password Hashing (good, bad, and the ugly)</h1><p>user passwords are hashed in this firmware using HMAC-SHA1, but the problem is, it’s getting hashed on the client-side, and the hash gets checked in the embedded web server against the hashed password stored in the NVRAM.<br>you can read the javascript hashing code </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var hmacObj &#x3D; new jsSHA(&quot;SHA-1&quot;, &quot;TEXT&quot;);</span><br><span class="line">hmacObj.setHMACKey(&quot;*kztech*&quot;, &quot;TEXT&quot;);</span><br><span class="line">hmacObj.update(&quot;admin&quot;);</span><br><span class="line">g_value &#x3D; hmacObj.getHMAC(&quot;HEX&quot;);</span><br></pre></td></tr></table></figure>
+<p>The good part is the attacker can’t read the user’s passwords, but thanks to hashing in the client-side, he can replace his passwords if he can get access from NVRAM!</p>
+<h1 id="Insecure-User-Role"><a href="#Insecure-User-Role" class="headerlink" title="Insecure User Role"></a>Insecure User Role</h1><p>like the previous versions of the firmware, most of the pages in the admin interface are invisible for the Guest user (admin), at the same time CGI handler won’t check the user access role in the incoming requests, so if you have knowledge about the firmware and it’s HTTP requests, you can modify the whole settings with the lowest user role.</p>
+<p>for example, the following URL can be accessed through the Guest Role to change the Sim Lock functionality<br><a target="_blank" rel="noopener" href="http://192.168.1.1/lte/ScanOperator.asp">http://192.168.1.1/lte/ScanOperator.asp</a> </p>
+<h1 id="Insecure-Root-Password"><a href="#Insecure-Root-Password" class="headerlink" title="Insecure Root Password"></a>Insecure Root Password</h1><p>the /etc/passwd contains a BSD hashed password: <code>$1$0kUTQMej$d1Gag3dRMwvuVjlYSsHIf.</code><br>after 12 hours of brute-forcing, the password was root123 !!!<br>so the telnet/ssh credentials are the root/root123, which is so insecure.<br>(honestly, I blame myself why I didn’t check the dictionary and waste 12 hours of my GPU power =) )</p>
+<h1 id="Insecure-Format-String"><a href="#Insecure-Format-String" class="headerlink" title="Insecure Format String"></a>Insecure Format String</h1><p>ping, traceroute, iperf commands suffer from insecure formatting, as you can see the following code : </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">.text:00045280 loc_45280                               ; CODE XREF: .text:00045258↑j</span><br><span class="line">.text:00045280                 LDR     R0, &#x3D;aIpProto   ; &quot;ip_proto&quot;</span><br><span class="line">.text:00045284                 LDR     R1, &#x3D;a0_10      ; &quot;0&quot;</span><br><span class="line">.text:00045288                 BL      sub_35188</span><br><span class="line">.text:0004528C                 MOV     R3, R0</span><br><span class="line">.text:00045290                 CMP     R3, #0</span><br><span class="line">.text:00045294                 BEQ     loc_452C4</span><br><span class="line">.text:00045298                 SUB     R3, R11, #0x610</span><br><span class="line">.text:0004529C                 SUB     R3, R3, #4</span><br><span class="line">.text:000452A0                 SUB     R3, R3, #8</span><br><span class="line">.text:000452A4                 LDR     R2, &#x3D;aVarSystemComma ; &quot;&#x2F;var&#x2F;system_command.log&quot;</span><br><span class="line">.text:000452A8                 STR     R2, [SP]</span><br><span class="line">.text:000452AC                 MOV     R0, R3</span><br><span class="line">.text:000452B0                 MOV     R1, #0x200</span><br><span class="line">.text:000452B4                 LDR     R2, &#x3D;aPing4SC41S21 ; &quot;ping -4 %s -c 4 1&gt;%s 2&gt;&amp;1&quot;</span><br><span class="line">.text:000452B8                 LDR     R3, [R11,#-0xC]</span><br><span class="line">.text:000452BC                 BL      snprintf</span><br><span class="line">.text:000452C0                 B       loc_4538C</span><br></pre></td></tr></table></figure>
+<p>Attackers can inject the system commands in the ping address, which leads to Command Execution.<br>The fun part is, the ping address only validates on the client-side using javascript just on ping’s mouse down event, which means if you press Enter, it won’t get validated! </p>
+<p>here is the list of files in “/usr/www” folder which you can access manually with any credentials.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">ALG.asp                         SetMain.asp                     config.asp</span><br><span class="line">ALG_a.asp                       Snmp.asp                        confirm_update.asp</span><br><span class="line">About.htm                       Snmp_a.asp                      default.asp</span><br><span class="line">Alive.asp                       Snmp_b.asp                      fails.asp</span><br><span class="line">Application.asp                 Status.asp                      gps_status.asp</span><br><span class="line">Atprtect.asp                    Status_Device.asp               gps_status_req.asp</span><br><span class="line">Auto_update.asp                 Status_Lan.asp                  http_live.asp</span><br><span class="line">Bridge_vlan.asp                 Status_Lan.live.asp             images</span><br><span class="line">DDNS.asp                        Status_Network.asp              index.asp</span><br><span class="line">DMZ.asp                         Status_Network_Router.asp       index_static.asp</span><br><span class="line">DevManagement.asp               Status_Network_Router.live.asp  indexs.js</span><br><span class="line">DeviceManagement.asp            Status_Network_Router_usb.asp   iperf.asp</span><br><span class="line">Factory_Defaults.asp            Status_Router.asp               ipref_Ref.asp</span><br><span class="line">Fail.asp                        Status_Router.live.asp          js</span><br><span class="line">Fail_s.asp                      Status_bridge_Lan.asp           key.pem</span><br><span class="line">Fail_u_decomp_err.asp           Status_nomo_Router.asp          kz_mifi.css</span><br><span class="line">Fail_u_malloc_err.asp           Status_usNetwork_Router.asp     kz_nomifi.css</span><br><span class="line">Fail_u_model_err.asp            Status_usbridge_Lan.asp         lang_pack</span><br><span class="line">Fail_u_param_err.asp            Success_rest.asp                login.asp</span><br><span class="line">Fail_u_prgfile_err.asp          Success_s.asp                   login_fa.asp</span><br><span class="line">Fail_u_prgsize_err.asp          Success_u_remote.asp            login_fa_plain.asp</span><br><span class="line">Fail_u_s.asp                    Success_u_s.asp                 login_unitac.asp</span><br><span class="line">Fail_u_token_err.asp            SysInfo.htm                     logout.asp</span><br><span class="line">FilterIPMAC.asp                 SystemMaintenance.asp           lte</span><br><span class="line">FilterSummary.asp               SystemReboot.asp                oma.asp</span><br><span class="line">Filters.asp                     SystemReset.asp                 opmode.asp</span><br><span class="line">Filters_a.asp                   SystemReset_us.asp              ping.asp</span><br><span class="line">Firewall.asp                    SystemReset_vs.asp              style</span><br><span class="line">Forward.asp                     SystemSecurity.asp              style_mifi.css</span><br><span class="line">ForwardSpec.asp                 Tc.asp                          style_nomifi.css</span><br><span class="line">Forward_alsatisSpec.asp         Traceroute.asp                  tr069</span><br><span class="line">Lan.asp                         Triggering.asp                  update_check.asp</span><br><span class="line">Management.asp                  UPnP.asp                        user_Status.asp</span><br><span class="line">Network.asp                     UPnP.live.asp                   user_ltesms.asp</span><br><span class="line">Ntp.asp                         Upgrade.asp                     user_manage.asp</span><br><span class="line">NvManagement.asp                UsbManagement.asp               user_network.asp</span><br><span class="line">PIE.htc                         UsbNetworking.asp               user_ping.asp</span><br><span class="line">Port_Services.asp               UsbUPnPNetworking.asp           user_upnp.asp</span><br><span class="line">QoS.asp                         UserFactoryDefaults.asp         user_vpnset.asp</span><br><span class="line">Reboot.asp                      UserSetup.asp                   vpnset.asp</span><br><span class="line">Restore_Ref.asp                 Vlancf.asp                      vpnset_Ref.asp</span><br><span class="line">RouteTable.asp                  cbrs                            wifi</span><br><span class="line">Routing.asp                     cert.pem                        wifi_status.asp</span><br><span class="line">Services.asp                    common.js                       wifi_status_req.asp</span><br></pre></td></tr></table></figure>
+            
+
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">TAGGED IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-none-link" href="../../../../tags/Hardware-Hacking/" rel="tag">Hardware Hacking</a> <a class="tag tag--primary tag--small t-none-link" href="../../../../tags/Security/" rel="tag">Security</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="../../../08/23/GenericMalwareAnalysis-1/"
+                    data-tooltip="Android Malware Analysis"
+                    aria-label="NEXT: Android Malware Analysis"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Leave a comment"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+                <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a target="_blank" rel="noopener" href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2021 Koorosh. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    <a
+                        class="post-action-btn btn btn--disabled"
+                        aria-hidden="true"
+                    >
+                        
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="../../../08/23/GenericMalwareAnalysis-1/"
+                    data-tooltip="Android Malware Analysis"
+                    aria-label="NEXT: Android Malware Analysis"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Share this post"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                    title="Share on Facebook"
+                    aria-label="Share on Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                    title="Share on Twitter"
+                    aria-label="Share on Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                    title="Share on Google+"
+                    aria-label="Share on Google+"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+                <li class="post-action">
+                    <a
+                        class="post-action-btn btn btn--default"
+                        href="#disqus_thread"
+                        aria-label="Leave a comment"
+                    >
+                        <i class="fa fa-comment"></i>
+                    </a>
+                </li>
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                        aria-label="Share on Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                        aria-label="Share on Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=https://blog.koorosh.dev/2021/11/20/AG3100D/"
+                        aria-label="Share on Google+"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
+                    </a>
+                </li>
+            
+        </ul>
+    </div>
+
+
+            
+        </div>
+        
+
+
+    
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <img id="about-card-picture" src="https://www.gravatar.com/avatar/0f50eb4dae65a5398f5884cbbc063ace?s=110" alt="Author&#39;s picture"/>
+        
+            <h4 id="about-card-name">Koorosh</h4>
+        
+            <div id="about-card-bio"><p>Developer / Security Researcher</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>Full-Stack Engineer</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('../../../../assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+
+<script src="../../../../assets/js/script-geudzlmpj1goapgmb72rzubebc2mv8uts5kivsyfzo3tkm10cgpfkdcwh6yn.min.js"></script>
+
+<!--SCRIPTS END-->
+
+
+    
+        <script>
+          var disqus_config = function() {
+            this.page.url = 'https://blog.koorosh.dev/2021/11/20/AG3100D/';
+              
+            this.page.identifier = '2021/11/20/AG3100D/';
+              
+          };
+          (function() {
+            var d = document, s = d.createElement('script');
+            var disqus_shortname = 'tech-with-k';
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+          })();
+        </script>
+    
+
+
+
+
+    </body>
+</html>
